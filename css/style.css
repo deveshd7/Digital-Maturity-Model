@@ -4,6 +4,13 @@
 	display: none;
 }
 
+#chart {
+  display: block;
+  margin: auto;
+  width: 50%;
+  scale: 1.25;
+}
+
 .outer-margin {
 	margin-left: 50px;
 	margin-right: 50px;
