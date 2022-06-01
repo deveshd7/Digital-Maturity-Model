@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+
+<!-- Mirrored from dragonballz.visualcinnamon.com/ by HTTrack Website Copier/3.x [XR&CO'2014], Thu, 26 May 2022 10:06:35 GMT -->
+<!-- Added by HTTrack -->
+<meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<head>
+
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+
+    <title>Digital Maturity Framework and Model Visualisation</title>
+
+    <!-- D3.js -->
+
+    <script src="https://d3js.org/d3.v3.js"></script>
+
+    <!-- jQuery -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+    <link rel=”stylesheet” href=”https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css”rel=”nofollow” integrity=”sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I” crossorigin=”anonymous”>
+
+
+    <!-- Open Sans & CSS -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel='stylesheet' type='text/css'>
+
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <link href="styles.css" rel='stylesheet'>
+
+
+    <!-- Styling -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+    <!-- Google fonts -->
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400,400i,700,700i|PT+Sans+Narrow:400,700" rel="stylesheet">
+
+    <!-- JavaScript files -->
+    <!-- <script src="plugins/bootstrap.min.js"></script> -->
+    <script src="plugins/d3.min.js"></script>
+
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Digital Maturity Framework and Model Visualisation</h1>
+    </div>
+
+
+    <div id="chorddiag"></div>
+
+    <script>
+        ////////////////////////////////////////////////////////////
+        //////////////////////// Set-up ////////////////////////////
+        ////////////////////////////////////////////////////////////
+        var screenWidth = $(window).width();
+
+        var margin = {
+                left: 50,
+                top: 10,
+                right: 50,
+                bottom: 10
+            },
+            width = Math.min(screenWidth, 800) - margin.left - margin.right,
+            height = Math.min(screenWidth, 800) * 5 / 6 - margin.top - margin.bottom;
+
+        //var svg = d3.select("#chart").append("svg")
+        //.attr("width", (width + margin.left + margin.right))
+        //.attr("height", (height + margin.top + margin.bottom));
+
+
+        //var wrapper = svg.append("g").attr("class", "chordWrapper")
+        // .attr("transform", "translate(" + (width / 2 + margin.left) + "," + (height / 2 + margin.top) + ")");;
+
+        var outerRadius = Math.min(width, height) / 2 - 100,
+            innerRadius = outerRadius * 0.95,
+            opacityDefault = 0.7; //default opacity of chords
+
+        ////////////////////////////////////////////////////////////
+        ////////////////////////// Data ////////////////////////////
+        ////////////////////////////////////////////////////////////
+        //Create a gradient definition for each chord
+
+        var Names = ["1. Denial", "2. Readiness", "3. Island", "4. Infusion", "5. DNA", "",
+            "Technology", "Operations", "Marketing", "Culture", "Strategy", ""
+        ]
+
+        var denial = "Denial"
+        var readiness = "Readiness"
+        var island = "Island"
+        var infusion = "Infusion"
+        var dna = "DNA"
+
+
+
+        var colors = ["#F0A851", "#FAD657", "#E0DF4D", "#71F748", "#51F096", "#0000FF00",
+            "#54B0EB", "#5867F5", "#8C4FDB", "#EC4BF2", "#EB5462", "#0000FF00"
+        ]
+        //Set the starting color (at 0%)
+
+        var respondents = 562, //Total number of respondents (i.e. the number that makes up the group)
+            emptyPerc = 0.10, //What % of the circle should become empty in comparison to the visible arcs
+            emptyStroke = Math.round(respondents * emptyPerc); //How many "units" would define this empty percentage
+        var matrix = [
+            [0, 0, 0, 0, 0, 0, 2, 3, 4, 5, 6, 0], //X
+            [0, 0, 0, 0, 0, 0, 2, 15, 4, 5, 30, 0], //Y
+            [0, 0, 0, 0, 0, 0, 10, 15, 4, 5, 30, 0],
+            [0, 0, 0, 0, 0, 0, 10, 15, 4, 25, 30, 0],
+            [0, 0, 0, 0, 0, 0, 10, 15, 20, 25, 30, 0], //Z
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, emptyStroke], //Dummy stroke
+            [2, 2, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0], //C
+            [3, 15, 15, 15, 15, 0, 0, 0, 0, 0, 0, 0], //B
+            [4, 4, 4, 4, 20, 0, 0, 0, 0, 0, 0, 0],
+            [5, 5, 5, 25, 25, 0, 0, 0, 0, 0, 0, 0], //A
+            [6, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, emptyStroke, 0, 0, 0, 0, 0, 0] //Dummy stroke
+        ];
+        //Calculate how far the Chord Diagram needs to be rotated clockwise
+        //to make the dummy invisible chord center vertically
+        var offset = Math.PI * (emptyStroke / (respondents + emptyStroke)) / 1.3;
+
+        //If you want a different chord ordering 
+        //use the following script instead
+        /*var chord = customChordLayout()
+            .padding(.02)
+            .sortChords(d3.descending)
+            .matrix(matrix);*/
+
+        var chord = d3.layout.chord()
+            .padding(.02)
+            .sortSubgroups(d3.descending) //sort the chords inside an arc from high to low
+            .sortChords(d3.ascending) //which chord should be shown on top when chords cross. Now the biggest chord is at the bottom
+            .matrix(matrix);
+
+        var arc = d3.svg.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(outerRadius)
+            .startAngle(startAngle) //startAngle and endAngle now include the offset in degrees
+            .endAngle(endAngle);
+
+        var path = d3.svg.chord()
+            .radius(innerRadius)
+            .startAngle(startAngle)
+            .endAngle(endAngle);
+
+
+        var svg = d3.select("#chorddiag").append("svg")
+            .attr("width", (width + margin.left + margin.right))
+            .attr("height", (height + margin.top + margin.bottom))
+            .append("g")
+            .attr("id", "circle")
+            .attr("transform", "translate(" + (width / 2 + margin.left) + "," + (height / 2 + margin.top) + ")");
+
+        svg.append("circle")
+            .attr("r", outerRadius);
+
+
+        var fill = d3.scale.ordinal()
+            .domain(d3.range(Names.length))
+            .range(["#F0A851", "#FAD657", "#E0DF4D", "#71F748", "#51F096", "#0000FF00",
+                "#54B0EB", "#5867F5", "#8C4FDB", "#EC4BF2", "#EB5462", "#0000FF00"
+            ])
+
+
+        ////////////////////////////////////////////////////////////
+        //////////////////// Draw outer Arcs ///////////////////////
+        ////////////////////////////////////////////////////////////
+
+        var g = svg.selectAll("g.group")
+            .data(chord.groups)
+            .enter().append("g")
+            .attr("class", "group")
+            .style("pointer-events", function(d, i) {
+                return (Names[i] === "" ? "none" : "auto")
+            })
+            .on("mouseover", mouseover);
+        /*.on("mouseover", fade(0))
+            .on("mouseout", fade(opacityDefault));
+        */
+        /*
+        if (this == g.node()) {
+            g.on("mouseout", fadeout(opacityDefault));
+        }
+        */
+
+
+        g.append("path")
+            .style("stroke", function(d) {
+                return fill(d.index);
+            })
+            .style("fill", function(d) {
+                return fill(d.index);
+            })
+            .attr("d", arc)
+        //    .on("mouseover", mouseover);
+        /*
+
+                .on("mouseout", fade(opacityDefault));*/
+
+
+        ////////////////////////////////////////////////////////////
+        ////////////////////// Append Names ////////////////////////
+        ////////////////////////////////////////////////////////////
+
+        //The text needs to be rotated with the offset in the clockwise direction
+        g.append("text")
+            .each(function(d) {
+                d.angle = ((d.startAngle + d.endAngle) / 2) + offset;
+            }) //Slightly altered function to define the angle
+            .attr("dy", ".35em")
+            .attr("class", "titles")
+            .attr("text-anchor", function(d) {
+                return d.angle > Math.PI ? "end" : null;
+            })
+            .attr("transform", function(d, i) {
+                var c = arc.centroid(d);
+                return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")" +
+                    "translate(" + (innerRadius + 15) + ")" +
+                    (d.angle > Math.PI ? "rotate(180)" : "")
+            })
+
+            .text(function(d, i) {
+                return Names[i];
+
+            })
+
+        // .on("click", function() {
+        //     d3.select(this).attr("stroke", "orange");
+        // });
+
+
+
+        ////////////////////////////////////////////////////////////
+        //////////////////// Draw inner chords /////////////////////
+        ////////////////////////////////////////////////////////////
+        var grads = svg.append("defs").selectAll("linearGradient")
+            .data(chord.chords())
+            .enter().append("linearGradient")
+            //Create a unique gradient id per chord: e.g. "chordGradient-0-4"
+            .attr("id", function(d) {
+                return "chordGradient-" + d.source.index + "-" + d.target.index;
+            })
+            //Instead of the object bounding box, use the entire SVG for setting locations
+            //in pixel locations instead of percentages (which is more typical)
+            .attr("gradientUnits", "userSpaceOnUse")
+            //The full mathematical formula to find the x and y locations 
+            //of the Avenger's source chord
+            .attr("x1", function(d, i) {
+                return innerRadius * Math.cos((d.source.endAngle - d.source.startAngle) / 2 +
+                    d.source.startAngle - Math.PI / 2);
+            })
+            .attr("y1", function(d, i) {
+                return innerRadius * Math.sin((d.source.endAngle - d.source.startAngle) / 2 +
+                    d.source.startAngle - Math.PI / 2);
+            })
+            //Find the location of the target Avenger's chord
+            .attr("x2", function(d, i) {
+                return innerRadius * Math.cos((d.target.endAngle - d.target.startAngle) / 2 +
+                    d.target.startAngle - Math.PI / 2);
+            })
+            .attr("y2", function(d, i) {
+                return innerRadius * Math.sin((d.target.endAngle - d.target.startAngle) / 2 +
+                    d.target.startAngle - Math.PI / 2);
+            })
+
+        grads.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", function(d) {
+                return colors[d.source.index];
+            });
+
+        //Set the ending color (at 100%)
+        grads.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", function(d) {
+                return colors[d.target.index];
+            });
+
+
+
+
+        var chords = svg.selectAll("path.chord")
+            .data(chord.chords)
+            .enter().append("path")
+            .attr("class", "chord")
+            .style("fill", function(d) {
+                return "url(#chordGradient-" + d.source.index + "-" + d.target.index + ")";
+            })
+            /*    .style("opacity", function (d) {
+                    return (Names[d.source.index] === "" ? 0 : opacityDefault);
+                }) //Make the dummy strokes have a zero opacity (invisible)*/
+            .style("pointer-events", function(d, i) {
+                return (Names[d.source.index] === "" ? "none" : "auto");
+            }) //Remove pointer events from dummy strokes
+            .attr("d", path);
+
+
+
+        ////////////////////////////////////////////////////////////
+        ///////////////////////// Tooltip //////////////////////////
+        ////////////////////////////////////////////////////////////
+
+        //Arcs
+        
+        // g.append("title")
+        //     .text(function (d, i) {
+        //         return Math.round(d.value) + " people in " + Names[i];
+        //     });
+        
+
+
+        //Chords
+        chords.append("title")
+            .text(function(d) {
+                return [Names[d.source.index], " scored ", Math.round(d.source.value), " % in ", Names[d.target.index]].join("");
+            });
+
+
+
+
+        ////////////////////////////////////////////////////////////
+        ///////////////////////// Ticks //////////////////////////
+        ////////////////////////////////////////////////////////////
+
+       // Add the ticks
+        // g
+        //     .selectAll(".group-tick")
+        //     .data(function (d) {
+        //         return groupTicks(d, 50);
+        //     }) // Controls the number of ticks: one tick each 25 here.
+        //     .enter()
+        //     .append("g")
+        //     .attr("transform", function (d) {
+        //         return "rotate(" + (d.angle * 180 / Math.PI - 90) + ") translate(" + 150 + ",0)";
+        //     })
+        //     .append("line") // By default, x1 = y1 = y2 = 0, so no need to specify it.
+        //     .attr("x2", 6)
+        //     .attr("stroke", "black")
+
+        // // Add the labels of a few ticks:
+        // g
+        //     .selectAll(".group-tick-label")
+        //     .data(function (d) {
+        //         return groupTicks(d, 25);
+        //     })
+        //     .enter()
+        //     .filter(function (d) {
+        //         return d.value % 25 === 0;
+        //     })
+        //     .append("g")
+        //     .attr("transform", function (d) {
+        //         return "rotate(" + (d.angle * 180 / Math.PI - 90) + ") translate(" + 200 + ",0)";
+        //     })
+        //     .append("text")
+        //     .attr("x", 8)
+        //     .attr("dy", ".35em")
+        //     .attr("transform", function (d) {
+        //         return d.angle > Math.PI ? "rotate(180) translate()" : null;
+        //     })
+        //     .style("text-anchor", function (d) {
+        //         return d.angle > Math.PI ? "end" : null;
+        //     })
+        //     .text(function (d) {
+        //         return d.value
+        //     })
+        //     .style("font-size", 9)
+
+
+        // // Returns an array of tick angles and values for a given group and step.
+        // function groupTicks(d, step) {
+        //     var k = (d.endAngle - d.startAngle) / d.value;
+        //     return d3.range(0, d.value, step).map(function (value) {
+        //         return {
+        //             value: value,
+        //             angle: value * k + d.startAngle
+        //         };
+        //     });
+        // }
+
+
+        ////////////////////////////////////////////////////////////
+        ////////////////// Extra Functions /////////////////////////
+        ////////////////////////////////////////////////////////////
+        /*Returns an array of tick angles and labels, given a group*/
+
+
+        //Include the offset in de start and end angle to rotate the Chord diagram clockwise
+        function startAngle(d) {
+            return d.startAngle + offset;
+        }
+
+        function endAngle(d) {
+            return d.endAngle + offset;
+        }
+
+
+
+
+        //mouse over function
+        function mouseover(d, i) {
+            chords.classed("fade", function(d) {
+                return d.source.index != i &&
+                    d.target.index != i;
+            })
+
+        }
+
+        // Returns an event handler for fading a given chord group
+        function fade(opacity) {
+            return function(d, i) {
+                svg.selectAll("path.chord")
+                    .filter(function(d) {
+                        return d.source.index !== i && d.target.index !== i && Names[d.source.index] !== "";
+                    })
+                    .transition("fadeOnArc")
+                    .style("opacity", opacity);
+            };
+        } //fade
+
+        function fadeout(opacity) {
+            return function(d, i) {
+                svg.selectAll("path.chord", true)
+                    .filter(function(d) {
+                        return d.source.index !== i && d.target.index !== i && Names[d.source.index] !== "";
+                    })
+                    .transition("fadeOnArc")
+                    .style("opacity", opacity);
+            };
+        } //fade
+
+    </script>
+
+    <div id="intro" class="container">
+
+
+        <div class="row">
+
+            <div id="character-legends" class="row">
+                <!-- Create div structure for the tooltip -->
+                <div id="tooltip-legend">
+                    <div class="tooltip-container">
+                        <div class="tooltip-name"></div>
+                        <div class="tooltip-rule-max"></div>
+                        <div class="tooltip-fights"></div>
+                        <div class="tooltip-character-info"></div>
+                    </div>
+                </div>
+
+
+                
+                <div id="character-legend-protagonists" class="col-xs-12 col-md-6">
+                    <text class="character-legend-dml" x="185.5" y="-61.25" dy="0.3em">Digital Maturity Level</text>
+                </div>
+                <div id="character-legend-antagonists" class="col-xs-12 col-md-6">
+                    <text class="character-legend-kpi" x="185.5" y="-61.25" dy="0.3em">Key Performance Indicators</text>
+                </div>
+
+
+            </div>
+
+            <div class="visual-width">
+
+
+
+                <div class="row">
+                    <!--
+    					-->
+                    <div id="fight-legend" class="col-xs-12 col-md-6 vcenter"></div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+<script>
+    function createCharacterLegend(characters) {
+
+///////////////////////////////////////////////////////////////////////////
+/////////////////////////// Create legend data ////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+var DML = [
+    {
+        character: "Denial",
+        fights: "Ranges from 0 to 20 %",
+        text: "Companies in the <b>'Digital Denial'</b> category have no plans to go digital. They still expect that the whole digitalisation concept to be a thing of the past. This can be due to the organisation's culture having developped a stern resistance to technological change, or simply due to lack of resources to embark on this digital journey."
+    },
+    {
+        character: "Readiness",
+        fights: "Ranges from 20 to 40 %",
+        text: "Companies in the <b>'Digital Readiness'</b> category have realised the need to go with the flow to stay relevant in the industry. They are however, still at beginner's level, but the organisation is ready to embrace change and has kickstarted their digital journey."
+    },
+    {
+        character: "Island",
+        fights: "Ranges from 40 to 60 %",
+        text: "In the <b>'Digital Island'</b> category, the digital bandwagon has started to gain momentum and there is the need to build more capacity. However, in these companies, there is often a department that is stuck behind and get more disconnected with the rest of the organisation.Hence, the challenge here is to 'bring the island to the world'. They adopt a clear digital strategynand react quickly to change. The digital transformation is well under way but more business processes need to go digital."
+    },
+    {
+        character: "Infusion",
+        fights: "Ranges from 60 to 80 %",
+        text: "The creation of a core digital team or agency is widely supported by digital people in all processes, services and departments. The digital footprint is gradually insfused across the organisation. <b>'Digital Infusion'</b> is the mark of a company that has taken the digital transformation process many steps further, enabling scalability and remaining sustainable."
+
+    },
+    {
+        character: "DNA",
+        fights: "Ranges from 80 to 100 %",
+        text: "<b>Digital DNA</b> companies showcase their digital presence like Facebook and Amazon. They have reinvented their business at their core and focus on their culture. They know how to innovate and disrupt, and they are at the forefront of innovation and transformation. They are fully automated with a complete and competitive communication channel"},
+];
+
+var subDML = [
+
+];
+
+
+var mainKPI = [
+    {
+        character: "Strategy",
+        fights: "The weightage for this KPI is 30 %",
+        text: "This section is about whether the organisation has the required digital systems to run. This includes I.T systems in place to drive the business processes, the tools available for data processing, transmission and storage and if partners are available for support if outsourcing is needed."},
+        {
+        character: "Culture",
+        fights: "The weightage for this KPI is 25 %",
+        text: "An organisation's philosophy affects the decisions and actions taken by its employees at all levels. It can either be an enabler or hindrance when going for innovation and transformation.There is the need to ascertain if there is a culture of trust and collaboration within the organisation, which is important for a successful digital transformation process."
+    },
+    {
+        character: "Marketing",
+        fights: "The weightage for this KPI is 20 %",
+        text: "Digital engagement is the process of interacting with potential and existing customers through various digital channels, such as social media and web-based advertising to build relationship with them and support promotion of brands. Since people are consuming digital content on a daily basis, traditional marketing platforms will disappear. The digital market will completely take over due to its affordability and convenience."},
+    {
+        character: "Operations",
+        fights: "The weightage for this KPI is 15 %",
+        text: "These are the key activities or cluster of activities which must be performed in an exemplary manner to ensure the organisation's continued competitiveness and sustainability as it adds primary value to anoutput. The five core areas which should be targeted for digitalisation are : 1.Accounting and Finance 2.Business Management and Development 3.Human Resource Management 4.Marketing, Public Relations and Sales 5.Operations and Maintenance." },
+    {
+        character: "Technology",
+        fights: "The weightage for this KPI is 10 %",
+        text: "This section is about whether the organisation has the required digital systems to run. This includes I.T systems in place to drive the business processes, the tools available for data processing, transmission and storage and if partners are available for support if outsourcing is needed."},
+];
+
+var subKPI = [];	
+
+var allCharacters = DML.concat(mainKPI).concat(subKPI);
+allCharacters = allCharacters.map(function (d) {
+    return d.character;
+});
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////// General values ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+//Fixed size for the circles
+var size = 35,
+    sizeSmall = 35 / 2,
+    circleRatio = 1.15;
+
+var marginSize = Math.round(1.2 * size);
+var margin = {
+    top: marginSize * 1.9, //To fit title
+    right: marginSize,
+    bottom: marginSize,
+    left: marginSize
+};
+
+//Scale the stroke of the circles depending on the size of the circles
+var strokeScale = d3.scaleLinear()
+    .domain([10, 50])
+    .range([1, 4]);
+
+var hoveredCircle;
+
+var heightOffset = drawLegend(DML, subDML, "Protagonists", 0);
+drawLegend(mainKPI, subKPI, "Antagonists", heightOffset);
+
+return allCharacters;
+
+///////////////////////////////////////////////////////////////////////////
+////////////////// Function to create SVGs and make legend ////////////////
+///////////////////////////////////////////////////////////////////////////
+
+function drawLegend(mainData, subData, title, heightOffset) {
+
+    ///////////////////////////////////////////////////////////////////////////
+    //////////////////////////// Set up the SVG ///////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    var width = document.getElementById("character-legend-" + title.toLowerCase()).clientWidth - 4 * 15 - margin.left - margin.right;
+    var height = 8 * size;
+
+    //SVG container
+    var svg = d3.select('#character-legend-' + title.toLowerCase())
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + (margin.left) + "," + (margin.top) + ")");
+
+    var xOffset = 15,
+        yExtraOffset = 0;
+    if (title === "Antagonists") {
+        if (document.documentElement.clientWidth >= 992 - 15) {
+            xOffset = width + margin.left + margin.right + 5 * 15;
+            yExtraOffset = 0;
+        } else {
+            xOffset = 15;
+            yExtraOffset = heightOffset;
+        } //else
+    } //if
+
+    d3.select("#character-legend-" + title.toLowerCase() + " svg").on("click", mouseOutLegend);
+
+    ///////////////////////////////////////////////////////////////////////////
+    ////////////////////////// Create defs elements ///////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    //Container for the gradients
+    var defs = svg.append("defs");
+
+    //Create wrapper for the clip paths
+    var imageWrapper = defs.append("g").attr("class", "image-group-wrapper");
+
+    var subDataSwitch = mainData.length;
+
+    //Create a circle with an image for the main characters
+    imageWrapper.selectAll(".character-legend-image")
+        .data(mainData.concat(subData))
+        .enter().append("pattern")
+        .attr("id", function (d) {
+            return "character-legend-" + d.character.replace(" ", "_");
+        })
+        .attr("class", "character-legend-image")
+        .attr("patternUnits", "objectBoundingBox")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .append("image")
+        .attr("xlink:href", function (d) {
+            return "img/" + d.character + ".svg";
+        })
+        .attr("width", function (d, i) {
+            var smallSize = i >= subDataSwitch ? 0.5 : 1;
+            return 2 * size * smallSize;
+        })
+        .attr("height", function (d, i) {
+            var smallSize = i >= subDataSwitch ? 0.5 : 1;
+            return 2 * size * smallSize;
+        });
+
+    ///////////////////////////////////////////////////////////////////////////
+    //////////////////////////// Place the titles /////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    //Add title on top
+    svg.append("text")
+        .attr("class", "character-legend-text")
+        .attr("x", width / 2)
+        .attr("y", -size * 1.75)
+        .attr("dy", "0.3em")
+        //.style("fill", "url(#legend-title-gradient)")
+        .text(title);
+
+    ///////////////////////////////////////////////////////////////////////////
+    //////////// Create a circle with image for the main characters ///////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    var characterCircleWrapper = svg.append("g").attr("class", "character-legend-wrapper");
+
+    var finalRow = 0;
+    finalRow = drawCircles(characterCircleWrapper, width, xOffset, yExtraOffset, mainData, "main-" + title.toLowerCase(), finalRow, "big");
+    finalRow = drawCircles(characterCircleWrapper, width, xOffset, yExtraOffset, subData, "sub-" + title.toLowerCase(), finalRow + 2 * size * 0.9, "small");
+
+    //Readjust the height to accomodate all the charcters
+    d3.select('#character-legend-' + title.toLowerCase() + ' svg').attr("height", finalRow + margin.top + margin.bottom);
+
+    return finalRow + margin.top + margin.bottom;
+
+} //function drawLegend
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////// Function to draw the circles /////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+function drawCircles(wrapper, width, xOffset, yExtraOffset, data, className, yOffset, type) {
+
+    if (type === "small") {
+        var scaleIncrease = 3;
+        var s = size / 2;
+        var cr = 1.2;
+        var extraWidth = size;
+    } else {
+        var scaleIncrease = 1.2;
+        var s = size;
+        var cr = circleRatio;
+        var extraWidth = 0;
+    } //else
+    //Very manual change
+
+
+    //Save the location of the final row, so the next group can be placed under it in the next function call
+    var finalRow;
+
+    var circleTotalWidth = (2 * s * cr),
+        numPerRow = Math.round((extraWidth + width) / circleTotalWidth),
+        remainingWidth = round2((extraWidth + width) - numPerRow * circleTotalWidth) / 2,
+        remainingCircle = data.length % numPerRow,
+        numRows = Math.ceil(data.length / numPerRow);
+
+    //If there are only two rows, divide them up nicely
+    if (numRows === 2) {
+        numPerRow = Math.ceil(data.length / 2) + (data.length % 2 === 0 ? 1 : 0);
+        remainingWidth = round2((extraWidth + width) - numPerRow * circleTotalWidth) / 2;
+        remainingCircle = data.length % numPerRow;
+    } //if
+
+    //Add the circles that will be filled with images
+    var characterCircle = wrapper.selectAll("." + className)
+        .data(data)
+        .enter().append("g")
+        .attr("class", "character-legend-group " + className)
+        .attr("transform", function (d, i) {
+            var offsetX = 0.5;
+            //If there is anything left for the last row that isn't exactly numPerRow
+            if (i >= data.length - remainingCircle) offsetX = (numPerRow - remainingCircle) * offsetX + offsetX;
+            if (i === data.length - 1) finalRow = yOffset + Math.floor(i / numPerRow) * circleTotalWidth;
+
+            d.x = -extraWidth / 2 + remainingWidth + offsetX * circleTotalWidth + i % numPerRow * circleTotalWidth;
+            d.y = yOffset + Math.floor(i / numPerRow) * circleTotalWidth;
+            return "translate(" + d.x + "," + d.y + ")";
+        })
+        .each(function (d) {
+            d.size = s;
+            d.scaleIncrease = scaleIncrease;
+        });
+
+    //Append the circle itself
+    characterCircle.append("circle")
+        .style("fill", function (d) {
+            return "url(#character-legend-" + d.character.replace(" ", "_") + ")";
+        })
+        .attr("r", s)
+        .style("stroke", function (d, i) {
+            var colorPos = characters.map(function (m) {
+                return m.character;
+            }).indexOf(d.character);
+            d.color = colorPos > -1 ? characters[colorPos].color : "#c1c1c1";
+            return d.color;
+        })
+        .style("stroke-width", strokeScale(s))
+        .on("click", function () {
+            d3.event.stopPropagation();
+        })
+        .on("mouseover", function (d) {
+
+            hoveredCircle = d3.select(this);
+
+            //Move the circle to the front
+            d3.select(this.parentNode).raise();
+            //Increase the scale of the image
+            hoveredCircle
+                .style("filter", "url(#glow)")
+                .transition("grow").duration(600)
+                .attr("transform", "scale(" + d.scaleIncrease + ")");
+
+            ///////////////////////// Adjust the tooltip ////////////////////////		
+
+            //Change the texts inside the tooltip
+            if (d.character === "Vegito") d.color = "#39100A";
+            d3.select(".tooltip-name").style("color", d.color).html(d.character);
+            d3.select(".tooltip-fights").html(d.fights);
+            d3.select(".tooltip-character-info").html(d.text);
+
+            
+
+            //Find the location of tooltip
+            var xpos = xOffset + d.x + margin.left + 15; //2*15/2 for padding
+            var ypos = yExtraOffset + d.y + margin.top - d.size * d.scaleIncrease - 15;
+
+            //Show and move the tooltip
+            d3.select("#tooltip-legend")
+                .transition("tooltip").duration(500)
+                .style("opacity", 1)
+                .style("top", ypos + "px")
+                .style("left", xpos + "px");
+        })
+        .on("mouseout", mouseOutLegend);
+
+    return finalRow;
+
+} //function drawCircles
+
+function mouseOutLegend(d) {
+    //Decrease the scale of the image
+    hoveredCircle
+        .style("filter", null)
+        .transition("grow").duration(400)
+        .attr("transform", "scale(1)");
+
+    //Hide tooltip
+    d3.select("#tooltip-legend").transition("tooltip").duration(300)
+        .style("opacity", 0);
+} //mouseOutLegend
+
+} //createCharacterLegend
+
+function createFightLegend() {
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////// Set up the SVG ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+//Fixed size for the circles
+var baseRadius = 5,
+    backgroundCircleFactor = 7, //How many times the baseRadius should the background circle become
+    baseDistanceRatio = 0.7, //The default distance that the circles are apart
+    scaleIncrease = 3;
+
+var margin = {
+    top: 10,
+    right: 10,
+    bottom: 10,
+    left: 10
+};
+var width = document.getElementById("fight-legend").clientWidth - 4 * 15 - margin.left - margin.right;
+var height = 2 * baseRadius * backgroundCircleFactor * 1.5; //2*baseRadius*backgroundCircleFactor * scaleIncrease * 1.1;
+
+//SVG container
+var svg = d3.select('#fight-legend')
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + (margin.left + width / 2) + "," + (margin.top + height / 2) + ")");
+
+
+} //function createFightLegend
+
+</script>
+<script>
+    var isMobile = document.documentElement.clientWidth < 400 ? true : false; //window.screen.width < 400 ? true : false;
+var isTouch = navigator.userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile/i);
+
+// http://stackoverflow.com/questions/4565112/javascript-how-to-find-out-if-the-user-browser-is-chrome
+// please note, 
+// that IE11 now returns undefined again for window.chrome
+// and new Opera 30 outputs true for window.chrome
+// and new IE Edge outputs to true now for window.chrome
+// and if not iOS Chrome check
+// so use the below updated condition
+var isChromium = window.chrome,
+    winNav = window.navigator,
+    vendorName = winNav.vendor,
+    isOpera = winNav.userAgent.indexOf("OPR") > -1,
+    isIEedge = winNav.userAgent.indexOf("Edge") > -1,
+    isIOSChrome = winNav.userAgent.match("CriOS");
+
+var isChrome;
+if (isIOSChrome) {
+    isChrome = true;
+} else if (isChromium !== null && isChromium !== undefined && vendorName === "Google Inc." && isOpera == false && isIEedge == false) {
+    isChrome = true;
+} else {
+    isChrome = false;
+} //else
+
+//Hide Chrome notification if it is already Chrome
+if (isChrome) {
+    d3.select("#chrome-note").style("display", "none");
+}
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////// Create legends //////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+var characters = [
+    {
+        character: "Denial",
+        color: "#F0A851"
+    }, //unique
+    {
+        character: "Readiness",
+        color: "#FAD657"
+    }, //unique
+    {
+        character: "Island",
+        color: "#E0DF4D"
+    }, //unique
+    {
+        character: "Infusion",
+        color: "#71F748"
+    }, //unique
+    {
+        character: "DNA",
+        color: "#51F096"
+    }, //Namek unique
+    {
+        character: "Strategy",
+        color: "#EB5462"
+    }, //Namek unique
+    {
+        character: "Culture",
+        color: "#EC4BF2"
+    }, //Namek unique
+    {
+        character: "Marketing",
+        color: "#8C4FDB"
+    }, //Trunks unique
+    {
+        character: "Operations",
+        color: "#5867F5"
+    }, //Tien & Chiaotzu
+    {
+        character: "Technology",
+        color: "#54B0EB"
+    },
+];
+var names = characters.map(function (d) {
+    return d.character;
+});
+var allCharacters = createCharacterLegend(characters);
+
+createFightLegend();
+   
+
+    //Special fights
+    var specialFights = [];
+
+    ///////////////////////////////////////////////////////////////////////////
+    ////////////////////////// Create the scales //////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    var sagaScale = d3.scaleLinear()
+        .domain([1, 17])
+        .range([0, width]);
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    ////////////////////////// Create defs elements ///////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    //Container for the gradients
+    var defs = svg.append("defs");
+
+    var annotationCircleSize = sagaScale(2) - sagaScale(1);
+    //Create wrapper for the clip paths
+    var imageWrapper = defs.append("g").attr("class", "image-group-wrapper");
+    //Had to add img width otherwise it wouldn't work in Safari & Firefox
+    //http://stackoverflow.com/questions/36390962/svg-image-tag-not-working-in-safari-and-firefox
+    imageWrapper.selectAll(".circle-image")
+        .data(specialFights)
+        .enter().append("pattern")
+        .attr("id", function (d) {
+            return "circle-image-" + d.fightID;
+        })
+        .attr("class", "circle-image")
+        .attr("patternUnits", "objectBoundingBox")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .append("image")
+        .attr("xlink:href", function (d) {
+            return "img/" + (isMobile || !isChrome || isTouch ? d.img_url.replace(".gif", ".jpg") : d.img_url);
+        })
+        //.attr("xlink:href", function(d) { return "img/" + d.img_url.replace(".gif", ".jpg"); })
+        .attr("x", function (d) {
+            return isMobile || !isChrome || isTouch ? sagaScale(d.hExtraMobile) : sagaScale(d.hExtra);
+        })
+        //.attr("x", function(d) { return sagaScale(d.hExtraMobile); })
+        .attr("height", 2 * annotationCircleSize)
+        .attr("width", function (d) {
+            return (isMobile || !isChrome || isTouch ? d.imgRatioMobile : d.imgRatio) * 2 * annotationCircleSize;
+        });
+    //.attr("width", function(d) { return d.imgRatioMobile*2*annotationCircleSize; });
+
+    //Create wrapper for the hover images
+    var hoverImageWrapper = defs.append("g").attr("class", "hover-image-group-wrapper");
+    //Create a patterns that will hold the image
+    hoverImageWrapper.selectAll(".hover-image")
+        .data(allCharacters)
+        .enter().append("pattern")
+        .attr("id", function (d) {
+            return "hover-" + d.replace(" ", "_");
+        })
+        .attr("class", "hover-image")
+        .attr("patternUnits", "objectBoundingBox")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .append("image")
+        .attr("xlink:href", function (d) {
+            return "img/" + d + ".jpg";
+        })
+        .attr("width", 2 * annotationCircleSize)
+        .attr("height", 2 * annotationCircleSize);
+
+    //Code taken from http://stackoverflow.com/questions/9630008/how-can-i-create-a-glow-around-a-rectangle-with-svg
+    //Filter for the outside glow
+    var filter = defs.append("filter")
+        .attr("id", "shadow");
+
+    filter.append("feColorMatrix")
+        .attr("type", "matrix")
+        .attr("values", "0 0 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 0 0.4 0")
+    filter.append("feGaussianBlur")
+        .attr("stdDeviation", "3")
+        .attr("result", "coloredBlur");
+
+    var feMerge = filter.append("feMerge");
+    feMerge.append("feMergeNode")
+        .attr("in", "coloredBlur");
+    feMerge.append("feMergeNode")
+        .attr("in", "SourceGraphic");
+
+    //Filter for the outside glow of the character circles
+    var filterGlow = defs.append("filter")
+        .attr("id", "glow")
+        .attr("x", "-25%")
+        .attr("y", "-25%")
+        .attr("height", "150%")
+        .attr("width", "150%");
+
+    // filterGlow.append("feGaussianBlur")
+    //     .attr("stdDeviation", "2")
+    //     .attr("result", "coloredBlur");
+
+    var feMergeGlow = filterGlow.append("feMerge");
+    feMergeGlow.append("feMergeNode")
+        .attr("in", "coloredBlur");
+    feMergeGlow.append("feMergeNode")
+        .attr("in", "SourceGraphic");
+
+
+
+//else
+
+///////////////////////////////////////////////////////////////////////////
+/////////////////////////// Extra functions ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+//Round number to 2 behind the decimal
+function round2(num) {
+    return (Math.round(num * 100) / 100).toFixed(2);
+} //round2
+
+</script>
+
+<script>
+jQuery(document).ready(function(){
+    jQuery('body,html').animate({scrollTop: 400}, 800); 
+})
+</script>
+    <!-- <script src="js/createCharacterLegend.js"></script>
+    <script src="js/createFightLegend.js"></script>
+    <script src="js/main.js"></script> -->
+</body>
+
+<!-- Mirrored from dragonballz.visualcinnamon.com/ by HTTrack Website Copier/3.x [XR&CO'2014], Thu, 26 May 2022 10:06:41 GMT -->
+
+</html>

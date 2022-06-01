@@ -1,0 +1,113 @@
+html {
+    scroll-behavior: smooth
+}
+
+.header {
+    text-align: center;
+    color: #8C8C8C;
+    font-size: 20px;
+    margin: auto;
+    width: 50%;
+    background: -webkit-linear-gradient(-45deg, #EB5462 25%, #54B0EB 50%, #F0A851 75%, #51F096 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header4 {
+    color: #262626;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.center {
+    display: block;
+    margin: auto;
+    width: 50%;
+}
+
+#chorddiag {
+    display: block;
+    margin: auto;
+    width: 50%;
+    scale: 10;
+}
+
+
+body {
+    background-image: url('background1.svg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    /* background-attachment: fixed; */
+    -moz-background-size: 100% 100%;
+-webkit-background-size: 100% 100%;
+background-size: 100% 100%;
+
+
+    font-family: roboto, sans-serif;
+
+    font-weight: 400;
+
+    font-style: normal;
+    font-size: 20px;
+
+}
+
+
+#circle circle {
+    fill: none;
+    pointer-events: all;
+}
+
+path.chord {
+    opacity: 0.75;
+    stroke: none;
+    stroke-width: 1px;
+    transition: opacity 0.3s;
+}
+
+#circle:hover path.fade {
+    opacity: 0;
+}
+
+p {
+    margin-left: 200px;
+    margin-right: 200px;
+
+
+}
+
+h4 {
+    margin-left: 200px;
+    margin-right: 200px;
+    margin-top: 40px
+}
+
+ul {
+    margin-left: 200px;
+    margin-right: 200px;
+}
+
+text {
+    cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
