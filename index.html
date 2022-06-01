@@ -482,7 +482,7 @@
 /////////////////////////// Create legend data ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-var DML = [
+var KPI = [
     {
         character: "Denial",
         fights: "Ranges from 0 to 20 %",
@@ -510,12 +510,12 @@ var DML = [
         text: "<b>Digital DNA</b> companies showcase their digital presence like Facebook and Amazon. They have reinvented their business at their core and focus on their culture. They know how to innovate and disrupt, and they are at the forefront of innovation and transformation. They are fully automated with a complete and competitive communication channel"},
 ];
 
-var subDML = [
+var subKPI = [
 
 ];
 
 
-var mainKPI = [
+var mainDML = [
     {
         character: "Strategy",
         fights: "The weightage for this KPI is 30 %",
@@ -539,9 +539,9 @@ var mainKPI = [
         text: "This section is about whether the organisation has the required digital systems to run. This includes I.T systems in place to drive the business processes, the tools available for data processing, transmission and storage and if partners are available for support if outsourcing is needed."},
 ];
 
-var subKPI = [];	
+var subDML = [];	
 
-var allCharacters = DML.concat(mainKPI).concat(subKPI);
+var allCharacters = KPI.concat(mainDML).concat(subDML);
 allCharacters = allCharacters.map(function (d) {
     return d.character;
 });
@@ -570,8 +570,8 @@ var strokeScale = d3.scaleLinear()
 
 var hoveredCircle;
 
-var heightOffset = drawLegend(DML, subDML, "Protagonists", 0);
-drawLegend(mainKPI, subKPI, "Antagonists", heightOffset);
+var heightOffset = drawLegend(KPI, subKPI, "Protagonists", 0);
+drawLegend(mainDML, subDML, "Antagonists", heightOffset);
 
 return allCharacters;
 
